@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Response
 
 from app.users.dao import UsersDAO
 from app.auth.schemas import AuthUser
@@ -7,7 +7,7 @@ from app.auth.utils import verify_password, create_access_token, validate_access
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post('/login', status_code=status.HTTP_200_OK)
-async def auth_user(authUser: AuthUser):
+async def auth_user(authUser: AuthUser, response: Response):
     user = await UsersDAO.find_one_or_none(email=authUser.email)
 
     is_valid = False
@@ -29,9 +29,16 @@ async def auth_user(authUser: AuthUser):
         "sub": str(user.id),
         "is_admin": user.is_admin
     })
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=3600,
+        samesite="lax",
+    )
+
     return {
-        "access_token": access_token,
-        "token_type": "bearer",
+        "message": "Успешная авторизация",
         "user": {
             "id": user.id,
             "username": user.username,
@@ -39,6 +46,11 @@ async def auth_user(authUser: AuthUser):
             "is_admin": user.is_admin
         }
     }
+
+@router.post('/logout', status_code=status.HTTP_200_OK)
+async def logout(response: Response):
+    response.delete_cookie(key="access_token")
+    return {"message": "Успешный выход"}
 
 # @router.get('/validate-access-token', status_code=status.HTTP_200_OK)
 # async def check_token(token: str):

@@ -1,5 +1,6 @@
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Cookie
 from sqlalchemy import or_
 
 from app.users.schemas import UserRegister, UserPassword
@@ -71,8 +72,25 @@ async def change_password(user_data: UserPassword) -> dict:
     }
 
 @router.get('/me', status_code=status.HTTP_200_OK)
-async def get_me(token: str) -> dict:
-    user_id = int(validate_access_token(token)['user_id'])
+async def get_me(access_token: Optional[str] = Cookie(None)) -> dict:
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Не авторизован"
+        )
 
+    user_id = int(validate_access_token(access_token)['user_id'])
     user = await UsersDAO.find_one_or_none(id=user_id)
-    return user
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Пользователь не найден"
+        )
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "is_admin": user.is_admin
+    }
