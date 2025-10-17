@@ -1,11 +1,11 @@
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, status, Cookie
+from fastapi import APIRouter, HTTPException, status, Request
 from sqlalchemy import or_
 
 from app.users.schemas import UserRegister, UserPassword
 from app.users.dao import UsersDAO
-from app.auth.utils import get_password_hash, verify_password, validate_access_token
+from app.auth.utils import get_password_hash, verify_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -72,14 +72,9 @@ async def change_password(user_data: UserPassword) -> dict:
     }
 
 @router.get('/me', status_code=status.HTTP_200_OK)
-async def get_me(access_token: Optional[str] = Cookie(None)) -> dict:
-    if not access_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Не авторизован"
-        )
-
-    user_id = int(validate_access_token(access_token)['user_id'])
+async def get_me(request: Request) -> dict:
+    user_id = request.state.user_id
+    print(user_id)
     user = await UsersDAO.find_one_or_none(id=user_id)
 
     if not user:
