@@ -11,7 +11,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
         request.state.is_authenticated = False
 
         protected_prefixes = [
-            "/users/me"
+            "/users/me",
+            "/pictures"
         ]
         public_prefixes = [
             "/docs",

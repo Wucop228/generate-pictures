@@ -1,5 +1,15 @@
 import os
+from pathlib import Path
+import sys
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+GENERATED_PICTURES_DIR = BASE_DIR / "generated_images"
+MAX_WORKERS = 3
+TASK_TTL = 3600
+MODEL_NAME = "dreamshaper-8"
+
 
 class Settings(BaseSettings):
     DB_HOST: str
@@ -9,6 +19,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     SECRET_KEY: str
     ALGORITHM: str
+    REDIS_URL: str
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env")

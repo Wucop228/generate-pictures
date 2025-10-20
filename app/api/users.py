@@ -74,7 +74,6 @@ async def change_password(user_data: UserPassword) -> dict:
 @router.get('/me', status_code=status.HTTP_200_OK)
 async def get_me(request: Request) -> dict:
     user_id = request.state.user_id
-    print(user_id)
     user = await UsersDAO.find_one_or_none(id=user_id)
 
     if not user:
