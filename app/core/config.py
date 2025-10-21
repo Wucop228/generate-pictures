@@ -16,9 +16,15 @@ class Settings(BaseSettings):
     DB_NAME: str
     DB_USER: str
     DB_PASSWORD: str
+
     SECRET_KEY: str
     ALGORITHM: str
+
     REDIS_URL: str
+
+    S3_KEY_ID: str
+    S3_SECRET_KEY: str
+    S3_BUCKET_NAME: str
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env"),

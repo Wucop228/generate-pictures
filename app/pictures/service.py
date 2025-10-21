@@ -1,10 +1,5 @@
 import sys
-# import os
 from pathlib import Path
-# current_file_dir = os.path.dirname(os.path.abspath(__file__))
-# ai_image_generator_path = os.path.join(current_file_dir, '..', '..', '..', 'ai-image-generator')
-# ai_image_generator_path = os.path.normpath(ai_image_generator_path)
-# sys.path.insert(0, ai_image_generator_path)
 
 AI_GENERATOR_PATH = Path("/app/ai-image-generator")
 if str(AI_GENERATOR_PATH) not in sys.path:
