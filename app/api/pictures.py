@@ -1,31 +1,15 @@
 import os
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
 
 from fastapi import APIRouter, Request, status
 
 from app.pictures.schemas import PictureCreate, TaskInfo, TaskStatus, PictureCreateResponse
 from app.pictures.redis_manager import redis_manager
 from app.pictures.service import run_generation
-from app.core.config import GENERATED_PICTURES_DIR, MAX_WORKERS
+from app.core.config import GENERATED_PICTURES_DIR
 
 router = APIRouter(prefix="/pictures", tags=["pictures"])
-
-executor: Optional[ThreadPoolExecutor] = None
-
-def startup_pictures():
-    global executor
-    executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
-    print(f"✅ Pictures: ThreadPoolExecutor создан ({MAX_WORKERS} workers)")
-
-def shutdown_pictures():
-    global executor
-    if executor:
-        print("🔄 Ожидание завершения активных задач...")
-        executor.shutdown(wait=True, cancel_futures=False)
-        print("✅ Pictures: ThreadPoolExecutor остановлен")
 
 @router.post("/generate", response_model=PictureCreateResponse, status_code=status.HTTP_201_CREATED)
 async def create_picture(request: Request, picture: PictureCreate):
@@ -50,6 +34,7 @@ async def create_picture(request: Request, picture: PictureCreate):
 
     await redis_manager.save_task(task)
 
+    executor = request.app.state.executor
     executor.submit(run_generation, task_id)
 
     return PictureCreateResponse(

@@ -1,9 +1,15 @@
 import sys
-import os
-current_file_dir = os.path.dirname(os.path.abspath(__file__))
-ai_image_generator_path = os.path.join(current_file_dir, '..', '..', '..', 'ai-image-generator')
-ai_image_generator_path = os.path.normpath(ai_image_generator_path)
-sys.path.insert(0, ai_image_generator_path)
+# import os
+from pathlib import Path
+# current_file_dir = os.path.dirname(os.path.abspath(__file__))
+# ai_image_generator_path = os.path.join(current_file_dir, '..', '..', '..', 'ai-image-generator')
+# ai_image_generator_path = os.path.normpath(ai_image_generator_path)
+# sys.path.insert(0, ai_image_generator_path)
+
+AI_GENERATOR_PATH = Path("/app/ai-image-generator")
+if str(AI_GENERATOR_PATH) not in sys.path:
+    sys.path.insert(0, str(AI_GENERATOR_PATH))
+
 from generate import generate_picture
 
 import asyncio
@@ -32,8 +38,8 @@ def run_generation(task_id: str):
         print(f"Промпт: {task.prompt}")
 
         generate_picture(
-            task.prompt,
-            task.filepath,
+            prompt=task.prompt,
+            path_to_picture=task.filepath,
             num_inference_steps=task.num_inference_steps,
             guidance_scale=task.guidance_scale
         )
