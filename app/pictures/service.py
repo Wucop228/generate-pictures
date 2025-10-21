@@ -16,15 +16,16 @@ def run_generation(task_id: str):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
+    thread_redis = redis_manager.get_sync_redis()
 
     try:
-        task = loop.run_until_complete(redis_manager.get_task(task_id))
+        task = loop.run_until_complete(redis_manager.get_task(task_id, redis_client=thread_redis))
         if not task:
             print(f"Задача {task_id} не найдена в Redis")
             return
 
         loop.run_until_complete(
-            redis_manager.update_task_status(task_id, TaskStatus.PROCESSING)
+            redis_manager.update_task_status(task_id, TaskStatus.PROCESSING, redis_client=thread_redis)
         )
 
         print(f"Начало генерации картинки для задачи {task_id}")
@@ -42,7 +43,8 @@ def run_generation(task_id: str):
                 task_id,
                 TaskStatus.COMPLETED,
                 filename=task.filename,
-                filepath=task.filepath
+                filepath=task.filepath,
+                redis_client=thread_redis
             )
         )
 
@@ -54,8 +56,10 @@ def run_generation(task_id: str):
             redis_manager.update_task_status(
                 task_id,
                 TaskStatus.FAILED,
-                error=str(e)
+                error=str(e),
+                redis_client=thread_redis
             )
         )
     finally:
+        loop.run_until_complete(thread_redis.close())
         loop.close()

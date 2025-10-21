@@ -9,6 +9,7 @@ from app.pictures.schemas import TaskInfo, TaskStatus
 class RedisManager:
     def __init__(self):
         self.redis: Optional[redis.Redis] = None
+        self.redis_url = settings.REDIS_URL
 
     async def connect(self):
         self.redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
@@ -20,14 +21,19 @@ class RedisManager:
             await self.redis.close()
             print("Redis отключен")
 
-    async def save_task(self, task: TaskInfo):
+    def get_sync_redis(self):
+        return redis.from_url(self.redis_url, decode_responses=True)
+
+    async def save_task(self, task: TaskInfo, redis_client=None):
+        client = redis_client if redis_client else self.redis
         key = f"task:{task.task_id}"
         value = task.model_dump_json()
-        await self.redis.set(key, value, ex=TASK_TTL)
+        await client.setex(key, TASK_TTL, value)
 
-    async def get_task(self, task_id: str) -> Optional[TaskInfo]:
+    async def get_task(self, task_id: str, redis_client=None) -> Optional[TaskInfo]:
+        client = redis_client if redis_client else self.redis
         key = f"task:{task_id}"
-        data = await self.redis.get(key)
+        data = await client.get(key)
         if data:
             return TaskInfo.model_validate_json(data)
         return None
@@ -38,9 +44,11 @@ class RedisManager:
         status: TaskStatus,
         filename: Optional[str] = None,
         filepath: Optional[str] = None,
-        error: Optional[str] = None
+        error: Optional[str] = None,
+        redis_client = None
     ):
-        task = await self.get_task(task_id)
+        client = redis_client if redis_client else self.redis
+        task = await self.get_task(task_id, redis_client=client)
         if task:
             task.status = status
             if filename:
@@ -49,7 +57,7 @@ class RedisManager:
                 task.filepath = filepath
             if error:
                 task.error = error
-            await self.save_task(task)
+            await self.save_task(task, redis_client=client)
 
     async def get_user_task(self, user_id: int, limit: int = 10) -> list[TaskInfo]:
         pattern = "task:*"
@@ -60,7 +68,7 @@ class RedisManager:
             if data:
                 task = TaskInfo.model_validate_json(data)
                 if task.user_id == user_id:
-                    task.append(task)
+                    tasks.append(task)
         tasks.sort(key=lambda x: x.created_at, reverse=True)
         return tasks[:limit]
 

@@ -5,7 +5,7 @@ import sys
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-GENERATED_PICTURES_DIR = BASE_DIR / "generated_images"
+GENERATED_PICTURES_DIR = BASE_DIR / "generated_pictures"
 MAX_WORKERS = 3
 TASK_TTL = 3600
 MODEL_NAME = "dreamshaper-8"
