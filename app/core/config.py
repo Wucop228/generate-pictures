@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import sys
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -22,7 +21,8 @@ class Settings(BaseSettings):
     REDIS_URL: str
 
     model_config = SettingsConfigDict(
-        env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env")
+        env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env"),
+        extra="ignore"
     )
 
 
@@ -30,6 +30,10 @@ settings = Settings()
 
 def get_url_db():
     return (f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@"
+            f"{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
+
+def get_sync_url_db():
+    return (f"postgresql://{settings.DB_USER}:{settings.DB_PASSWORD}@"
             f"{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
 
 def get_auth_data():
