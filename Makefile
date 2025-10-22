@@ -9,8 +9,10 @@ help:
 	@echo "  make down           - Остановить все сервисы"
 	@echo "  make down-gpu       - Остановить все сервисы с GPU поддержкой"
 	@echo "  make restart        - Перезапустить сервисы"
-	@echo "  make detect-gpu     - Автоопределение GPU (на винде не работает)"
+	@echo "  make restart-worker - Перезапустить Celery воркер"
+	@echo "  make detect-gpu     - Автоопределение GPU (в powershell не работает)"
 	@echo "  make logs           - Показать логи приложения"
+	@echo "  make logs-worker    - Показать логи Celery воркера"
 	@echo "  make logs-all       - Показать все логи"
 	@echo "  make ps             - Статус контейнеров"
 	@echo ""
@@ -22,6 +24,7 @@ help:
 	@echo ""
 	@echo "=== Разработка ==="
 	@echo "  make shell          - Shell в контейнере приложения"
+	@echo "  make shell-worker   - Shell в контейнере Celery воркера"
 	@echo "  make dev-up         - Только БД+Redis для локальной разработки"
 	@echo "  make dev-down       - Остановить БД+Redis"
 	@echo "  make clean          - Удалить все контейнеры и volumes"
@@ -35,10 +38,12 @@ build-gpu:
 up:
 	docker-compose up -d
 	@echo "Приложение запущено на http://localhost:8000"
+	@echo "Celery воркер: 3 процесса (CPU режим)"
 
 up-gpu:
 	docker-compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
 	@echo "Приложение запущено на http://localhost:8000 (GPU режим)"
+	@echo "Celery воркер: 3 процесса (CUDA режим)"
 
 down:
 	docker-compose down
@@ -58,11 +63,18 @@ detect-gpu:
 restart:
 	docker-compose restart
 
+restart-worker:
+	docker-compose restart celery_worker
+	@echo "Celery воркер перезапущен"
+
 ps:
 	docker-compose ps
 
 logs:
 	docker-compose logs -f app
+
+logs-worker:
+	docker-compose logs -f celery_worker
 
 logs-all:
 	docker-compose logs -f
@@ -79,6 +91,9 @@ migrate-downgrade:
 
 shell:
 	docker-compose exec app /bin/bash
+
+shell-worker:
+	docker-compose exec celery_worker /bin/bash
 
 shell-db:
 	docker-compose exec db psql -U soccer -d generate_pictures

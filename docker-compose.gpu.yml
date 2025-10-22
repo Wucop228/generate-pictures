@@ -1,5 +1,18 @@
 services:
   app:
+    environment:
+      - FORCE_DEVICE=cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  celery_worker:
+    environment:
+      - FORCE_DEVICE=cuda
     deploy:
       resources:
         reservations:
