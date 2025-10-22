@@ -1,11 +1,15 @@
-.PHONY: help build up down restart logs migrate shell clean dev-up
+.PHONY: help build build-gpu up up-gpu down down-gpu restart logs migrate shell clean dev-up detect-gpu
 
 help:
 	@echo "=== Docker команды ==="
 	@echo "  make build          - Собрать Docker образы"
+	@echo "  make build-gpu      - Собрать Docker образы с GPU поддержкой"
 	@echo "  make up             - Запустить все сервисы в Docker"
+	@echo "  make up-gpu         - Запустить все сервисы в Docker с GPU поддержкой"
 	@echo "  make down           - Остановить все сервисы"
+	@echo "  make down-gpu       - Остановить все сервисы с GPU поддержкой"
 	@echo "  make restart        - Перезапустить сервисы"
+	@echo "  make detect-gpu     - Автоопределение GPU (на винде не работает)"
 	@echo "  make logs           - Показать логи приложения"
 	@echo "  make logs-all       - Показать все логи"
 	@echo "  make ps             - Статус контейнеров"
@@ -25,12 +29,31 @@ help:
 build:
 	docker-compose build
 
+build-gpu:
+	docker-compose -f docker-compose.yml -f docker-compose.gpu.yml build
+
 up:
 	docker-compose up -d
 	@echo "Приложение запущено на http://localhost:8000"
 
+up-gpu:
+	docker-compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+	@echo "Приложение запущено на http://localhost:8000 (GPU режим)"
+
 down:
 	docker-compose down
+
+down-gpu:
+	docker-compose -f docker-compose.yml -f docker-compose.gpu.yml down
+
+detect-gpu:
+	@if command -v nvidia-smi > /dev/null 2>&1; then \
+		echo "GPU обнаружена, запуск в GPU режиме..."; \
+		$(MAKE) build-gpu up-gpu; \
+	else \
+		echo "GPU не найдена, запуск в CPU режиме..."; \
+		$(MAKE) build up; \
+	fi
 
 restart:
 	docker-compose restart

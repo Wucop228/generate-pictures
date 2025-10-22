@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     S3_SECRET_KEY: str
     S3_BUCKET_NAME: str
 
+    FORCE_DEVICE: str = "cpu"
+
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env"),
         extra="ignore"

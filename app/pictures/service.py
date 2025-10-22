@@ -11,6 +11,7 @@ import asyncio
 
 from app.pictures.redis_manager import redis_manager
 from app.pictures.schemas import TaskStatus
+from app.core.config import settings
 
 
 def run_generation(task_id: str):
@@ -32,11 +33,14 @@ def run_generation(task_id: str):
         print(f"Начало генерации картинки для задачи {task_id}")
         print(f"Промпт: {task.prompt}")
 
+        force_device = settings.FORCE_DEVICE
+
         generate_picture(
             prompt=task.prompt,
             path_to_picture=task.filepath,
             num_inference_steps=task.num_inference_steps,
-            guidance_scale=task.guidance_scale
+            guidance_scale=task.guidance_scale,
+            force_device=force_device
         )
 
         loop.run_until_complete(

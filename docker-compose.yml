@@ -56,6 +56,10 @@ services:
       - ALGORITHM=${ALGORITHM}
       - REDIS_URL=redis://redis:6379
       - PYTHONPATH=/app:/app/ai-image-generator
+      - FORCE_DEVICE=${FORCE_DEVICE:-auto}
+      - S3_KEY_ID=${S3_KEY_ID}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
     depends_on:
       db:
         condition: service_healthy
