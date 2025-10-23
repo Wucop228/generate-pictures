@@ -1,18 +1,12 @@
 services:
-  app:
-    environment:
-      - FORCE_DEVICE=cuda
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-
   celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    image: generate_pictures_celery:gpu
     environment:
       - FORCE_DEVICE=cuda
+    command: celery -A app.pictures.celery_app worker --loglevel=info --pool=solo
     deploy:
       resources:
         reservations:

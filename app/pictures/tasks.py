@@ -66,7 +66,7 @@ def get_optimal_device(force_device: str = None):
 
 
 def load_model():
-    print("Загрузка модели (один раз на воркер)...")
+    print("Загрузка модели")
 
     device, dtype = get_optimal_device(settings.FORCE_DEVICE)
 
@@ -75,7 +75,9 @@ def load_model():
     if not model_path.exists():
         raise FileNotFoundError(f"Модель не найдена: {model_path}")
 
-    print(f"Загрузка модели из: {model_path}")
+    print(f"Путь к модели: {model_path}")
+    print(f"Устройство: {device}")
+    print(f"Тип данных: {dtype}")
 
     pipe = AutoPipelineForText2Image.from_pretrained(
         str(model_path),
@@ -96,7 +98,10 @@ def load_model():
 
     _model_cache["pipe"] = pipe
     _model_cache["device"] = device
-    print("Модель загружена и закеширована!")
+    _model_cache["dtype"] = dtype
+
+    print("Модель загружена")
+
 
 @worker_process_init.connect
 def init_worker_process(sender=None, **kwargs):
@@ -106,7 +111,7 @@ def init_worker_process(sender=None, **kwargs):
 
 def get_model():
     if "pipe" not in _model_cache:
-        print("Модель не найдена в кеше, загружаю...")
+        print("Модель не найдена в кеше")
         load_model()
 
     return _model_cache["pipe"], _model_cache["device"]
@@ -162,7 +167,7 @@ def generate_picture_task(self, task_id: str):
 
         if device == "cuda":
             torch.cuda.empty_cache()
-            print("Память GPU очищена")
+            print("🧹 Память GPU очищена")
 
         loop.run_until_complete(
             redis_mgr.update_task_status(
