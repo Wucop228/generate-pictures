@@ -37,7 +37,8 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.cpu
+    image: generate_pictures_app:cpu
     container_name: generate_pictures_app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
@@ -56,7 +57,7 @@ services:
       - ALGORITHM=${ALGORITHM}
       - REDIS_URL=redis://redis:6379
       - PYTHONPATH=/app:/app/ai-image-generator
-      - FORCE_DEVICE=${FORCE_DEVICE:-cpu}
+      - FORCE_DEVICE=cpu
       - S3_KEY_ID=${S3_KEY_ID}
       - S3_SECRET_KEY=${S3_SECRET_KEY}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
@@ -72,9 +73,10 @@ services:
   celery_worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.cpu
+    image: generate_pictures_celery:cpu
     container_name: generate_pictures_celery_worker
-    command: celery -A app.pictures.celery_app worker --loglevel=info --concurrency=3
+    command: celery -A app.pictures.celery_app worker --loglevel=info --pool=solo
     volumes:
       - .:/app
       - ./generated_pictures:/app/generated_pictures
