@@ -71,10 +71,7 @@ services:
     restart: unless-stopped
 
   celery_worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.cpu
-    image: generate_pictures_celery:cpu
+    image: generate_pictures_app:cpu
     container_name: generate_pictures_celery_worker
     command: celery -A app.pictures.celery_app worker --loglevel=info --pool=solo
     volumes:
