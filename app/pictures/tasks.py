@@ -7,6 +7,7 @@ from celery.signals import worker_process_init
 from app.pictures.celery_app import celery_app
 from app.pictures.redis_manager import RedisManager
 from app.pictures.schemas import TaskStatus
+from app.pictures.dao import PicturesDAO
 from app.core.config import settings
 
 _model_cache = {}
@@ -143,6 +144,9 @@ def generate_picture_task(self, task_id: str):
                 redis_client=redis_client
             )
         )
+        loop.run_until_complete(
+            PicturesDAO.update(filter_by={"task_id": task_id}, status=TaskStatus.PROCESSING)
+        )
 
         print(f"Генерация для задачи {task_id}")
         print(f"Промпт: {task.prompt}")
@@ -162,6 +166,14 @@ def generate_picture_task(self, task_id: str):
         output_path = Path(task.filepath)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         image.save(str(output_path))
+        from os.path import basename
+        loop.run_until_complete(
+            PicturesDAO.update(
+                filter_by={"task_id": task_id},
+                status=TaskStatus.COMPLETED,
+                filename=basename(task.filepath),
+            )
+        )
 
         print(f"Изображение сохранено: {task.filepath}")
 
@@ -193,6 +205,9 @@ def generate_picture_task(self, task_id: str):
                 error=str(e),
                 redis_client=redis_client
             )
+        )
+        loop.run_until_complete(
+            PicturesDAO.update(filter_by={"task_id": task_id}, status=TaskStatus.FAILED, error=str(e))
         )
         raise
 

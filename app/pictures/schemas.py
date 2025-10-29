@@ -1,7 +1,8 @@
 from enum import Enum
 from typing import Optional
+from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 class TaskStatus(str, Enum):
     PENDING = "pending"
@@ -31,6 +32,8 @@ class PictureStatusResponse(BaseModel):
     created_at: Optional[int] = None
 
 class TaskInfo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     task_id: str
     user_id: int
     prompt: str
@@ -41,3 +44,10 @@ class TaskInfo(BaseModel):
     created_at: int
     num_inference_steps: int = 15
     guidance_scale: float = 8.0
+
+    @field_validator("created_at", mode="before")
+    @classmethod
+    def _created_at_to_ms(cls, v):
+        if isinstance(v, datetime):
+            return int(v.timestamp() * 1000)
+        return v

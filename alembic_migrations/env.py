@@ -15,6 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # access to the values within the .ini file in use.
 
 from app.core.database import Base
+from app.pictures.models import *
 from app.users.models import *
 # from app.auth.models import *
 
