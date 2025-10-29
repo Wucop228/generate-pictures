@@ -1,5 +1,5 @@
 from sqlalchemy.future import select
-from sqlalchemy import update as sqlalchemy_update
+from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.database import async_session_maker
@@ -57,3 +57,16 @@ class BaseDAO:
             query = select(cls.model).filter(*filter_conditions)
             result = await session.execute(query)
             return result.scalar_one_or_none()
+
+    @classmethod
+    async def delete(cls, *, filter_by: dict) -> int:
+        async with async_session_maker() as session:
+            try:
+                result = await session.execute(
+                    sqlalchemy_delete(cls.model).filter_by(**filter_by)
+                )
+                await session.commit()
+                return getattr(result, "rowcount", 0) or 0
+            except SQLAlchemyError as e:
+                await session.rollback()
+                raise e

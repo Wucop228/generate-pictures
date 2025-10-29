@@ -3,11 +3,12 @@ import time
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Request, status, HTTPException
+from fastapi import APIRouter, Request, status, HTTPException, Response
 from sqlalchemy import and_
 
 from app.pictures.schemas import PictureCreate, TaskInfo, TaskStatus, PictureCreateResponse
 from app.pictures.redis_manager import redis_manager
+from app.pictures.s3_manager import s3_manager
 from app.pictures.tasks import generate_picture_task
 from app.pictures.dao import PicturesDAO
 from app.pictures.models import Picture
@@ -90,3 +91,43 @@ async def get_pictures(request: Request):
     pictures = await PicturesDAO.find_all(user_id=user_id)
     pictures.sort(key=lambda p: p.created_at or 0, reverse=True)
     return pictures
+
+@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_picture(request: Request, task_id: str):
+    picture = await PicturesDAO.find_one_or_none_by_filter(
+        and_(Picture.task_id == task_id, Picture.user_id == request.state.user_id)
+    )
+
+    if picture is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Картинка не найдена",
+        )
+
+    if picture.s3_key:
+        s3_manager.delete_file(picture.s3_key)
+
+    await PicturesDAO.delete(filter_by={"task_id": task_id})
+
+    return {"deleted": True, "task_id": task_id}
+
+@router.get("/download/{task_id}", status_code=status.HTTP_200_OK)
+async def download_picture(request: Request, task_id: str):
+    picture = await PicturesDAO.find_one_or_none_by_filter(
+        and_(Picture.task_id == task_id, Picture.user_id == request.state.user_id)
+    )
+
+    if picture is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Картинка не найдена",
+        )
+
+    if not getattr(picture, "s3_key", None):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Файл пока не доступен")
+
+    url = s3_manager.get_presigned_url(picture.s3_key, expiration=3600)
+    if not url:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Не удалось получить ссылку")
+
+    return {"url": url}

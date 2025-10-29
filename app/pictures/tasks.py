@@ -1,11 +1,13 @@
 import torch
 from pathlib import Path
+import os
 
 from diffusers import AutoPipelineForText2Image
 from celery.signals import worker_process_init
 
 from app.pictures.celery_app import celery_app
 from app.pictures.redis_manager import RedisManager
+from app.pictures.s3_manager import s3_manager
 from app.pictures.schemas import TaskStatus
 from app.pictures.dao import PicturesDAO
 from app.core.config import settings
@@ -166,12 +168,24 @@ def generate_picture_task(self, task_id: str):
         output_path = Path(task.filepath)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         image.save(str(output_path))
+
+        s3_key = f"users/{task.user_id}/{output_path.name}"
+        if not s3_manager.upload_file(str(output_path), s3_key):
+            raise RuntimeError("Не удалось загрузить файл в S3")
+
+        try:
+            os.remove(str(output_path))
+            print(f"Файл {output_path} успешно удален")
+        except FileNotFoundError:
+            ...
+
         from os.path import basename
         loop.run_until_complete(
             PicturesDAO.update(
                 filter_by={"task_id": task_id},
                 status=TaskStatus.COMPLETED,
                 filename=basename(task.filepath),
+                s3_key=s3_key,
             )
         )
 
