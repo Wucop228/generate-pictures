@@ -1,14 +1,23 @@
+import logging
+
 from fastapi import APIRouter, status, HTTPException, Response
 
 from app.users.dao import UsersDAO
 from app.auth.schemas import AuthUser
-from app.auth.utils import verify_password, create_access_token, validate_access_token
+from app.auth.utils import verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger("app.api.auth")
 
 @router.post('/login', status_code=status.HTTP_200_OK)
 async def auth_user(authUser: AuthUser, response: Response):
-    user = await UsersDAO.find_one_or_none(email=authUser.email)
+    logger.info("Попытка входа: email=%s", authUser.email)
+
+    try:
+        user = await UsersDAO.find_one_or_none(email=authUser.email)
+    except Exception:
+        logger.exception("Сбой чтения пользователя из БД: email=%s", authUser.email)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Не удалось получить пользователя")
 
     is_valid = False
     if user:
@@ -18,8 +27,10 @@ async def auth_user(authUser: AuthUser, response: Response):
             authUser.password,
             "$2b$12$q6VtHKLMERC2AkoXOFJ1eubTxllYp/dxUsR3coNAhhQYg.121Fqbi"
         )
+    logger.debug("Проверка пароля пользователя: email=%s status=%s", authUser.email, is_valid)
 
     if not is_valid:
+        logger.warning("Неуспешный вход: email=%s", authUser.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Неверная почта или пароль"
@@ -37,6 +48,7 @@ async def auth_user(authUser: AuthUser, response: Response):
         samesite="lax",
     )
 
+    logger.info("Вход выполнен: email=%s", authUser.email)
     return {
         "message": "Успешная авторизация",
         "user": {
@@ -49,10 +61,8 @@ async def auth_user(authUser: AuthUser, response: Response):
 
 @router.post('/logout', status_code=status.HTTP_200_OK)
 async def logout(response: Response):
+    logger.info("Попытка выхода пользователя")
     response.delete_cookie(key="access_token")
-    return {"message": "Успешный выход"}
 
-# @router.get('/validate-access-token', status_code=status.HTTP_200_OK)
-# async def check_token(token: str):
-#     user_id = validate_access_token(token)
-#     return user_id
+    logger.info("Выход выполнен")
+    return {"message": "Успешный выход"}

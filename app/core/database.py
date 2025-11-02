@@ -7,9 +7,9 @@ from sqlalchemy import func
 
 from app.core.config import get_url_db
 
-DATABSE_URL = get_url_db()
+DATABASE_URL = get_url_db()
 
-engine = create_async_engine(DATABSE_URL)
+engine = create_async_engine(DATABASE_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 int_pk = Annotated[int, mapped_column(primary_key=True)]
