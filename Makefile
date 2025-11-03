@@ -24,7 +24,8 @@ help:
 	@echo "Тестирование:"
 	@echo "  make test           - Тестирование в докере"
 	@echo "  make test-host      - Тестирование вне докера"
-	@echo "  make test-cov       - Покрытие тестирования"
+	@echo "  make test-cov       - Покрытие тестирования в докере"
+	@echo "  make test-host-cov  - Покрытие тестирования вне докере"
 build-cpu:
 	docker-compose build
 
@@ -92,12 +93,13 @@ dev-down:
 	docker-compose stop db redis
 
 test:
-	docker-compose exec app sh -lc "\
-		pip install -q pytest pytest-asyncio fakeredis moto[boto3] && \
-		pytest"
+	docker-compose exec app pytest
 
 test-host:
-	pip install -q pytest pytest-asyncio fakeredis moto[boto3] && pytest
+	pytest
 
 test-cov:
+	docker-compose exec app pytest --cov=app --cov-report=term-missing
+
+test-host-cov:
 	pytest --cov=app --cov-report=term-missing
