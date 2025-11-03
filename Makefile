@@ -20,7 +20,11 @@ help:
 	@echo ""
 	@echo "Очистка:"
 	@echo "  make clean          - Удалить всё (образы, volumes, контейнеры)"
-
+	@echo ""
+	@echo "Тестирование:"
+	@echo "  make test           - Тестирование в докере"
+	@echo "  make test-host      - Тестирование вне докера"
+	@echo "  make test-cov       - Покрытие тестирования"
 build-cpu:
 	docker-compose build
 
@@ -86,3 +90,14 @@ dev-up:
 
 dev-down:
 	docker-compose stop db redis
+
+test:
+	docker-compose exec app sh -lc "\
+		pip install -q pytest pytest-asyncio fakeredis moto[boto3] && \
+		pytest"
+
+test-host:
+	pip install -q pytest pytest-asyncio fakeredis moto[boto3] && pytest
+
+test-cov:
+	pytest --cov=app --cov-report=term-missing

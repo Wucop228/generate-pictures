@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, HTTPException, Response
 
 from app.users.dao import UsersDAO
 from app.auth.schemas import AuthUser
-from app.auth.utils import verify_password, create_access_token
+from app.auth import utils as auth_utils
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger("app.api.auth")
@@ -21,9 +21,9 @@ async def auth_user(authUser: AuthUser, response: Response):
 
     is_valid = False
     if user:
-        is_valid = verify_password(authUser.password, user.password)
+        is_valid = auth_utils.verify_password(authUser.password, user.password)
     else:
-        verify_password(
+        auth_utils.verify_password(
             authUser.password,
             "$2b$12$q6VtHKLMERC2AkoXOFJ1eubTxllYp/dxUsR3coNAhhQYg.121Fqbi"
         )
@@ -36,7 +36,7 @@ async def auth_user(authUser: AuthUser, response: Response):
             detail="Неверная почта или пароль"
         )
 
-    access_token = create_access_token({
+    access_token = auth_utils.create_access_token({
         "sub": str(user.id),
         "is_admin": user.is_admin
     })

@@ -5,7 +5,7 @@ from sqlalchemy import or_
 
 from app.users.schemas import UserRegister, UserPassword
 from app.users.dao import UsersDAO
-from app.auth.utils import get_password_hash, verify_password
+from app.auth import utils as auth_utils
 
 router = APIRouter(prefix="/users", tags=["users"])
 logger = logging.getLogger("app.api.users")
@@ -40,7 +40,7 @@ async def create_user(user_data: UserRegister) -> dict:
 
     try:
         user_dict = user_data.model_dump(exclude=['password'])
-        user_dict["password"] = get_password_hash(user_data.password)
+        user_dict["password"] = auth_utils.get_password_hash(user_data.password)
         new_user = await UsersDAO.add(**user_dict)
 
         logger.info("Пользователь успешно создан: email=%s username=%s", email, username)
@@ -67,9 +67,9 @@ async def change_password(user_data: UserPassword) -> dict:
 
     is_valid = False
     if user:
-        is_valid = verify_password(user_data.old_password, user.password)
+        is_valid = auth_utils.verify_password(user_data.old_password, user.password)
     else:
-        verify_password(
+        auth_utils.verify_password(
             user_data.old_password,
             "$2b$12$q6VtHKLMERC2AkoXOFJ1eubTxllYp/dxUsR3coNAhhQYg.121Fqbi"
         )
@@ -85,7 +85,7 @@ async def change_password(user_data: UserPassword) -> dict:
     try:
         await UsersDAO.update(
             filter_by={"email": user_data.email},
-            password=get_password_hash(user_data.new_password1)
+            password=auth_utils.get_password_hash(user_data.new_password1)
         )
     except Exception:
         logger.exception("Ошибка при изменении пароля пользователя: email=%s", user_data.email)
