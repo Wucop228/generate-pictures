@@ -20,6 +20,7 @@ click==8.3.0
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
 click-repl==0.3.0
+coverage==7.11.0
 cryptography==46.0.3
 diffusers==0.35.2
 dnspython==2.8.0
@@ -62,6 +63,7 @@ pydantic_core==2.33.2
 Pygments==2.19.2
 pytest==8.4.2
 pytest-asyncio==1.2.0
+pytest-cov==7.0.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
 python-jose==3.5.0
