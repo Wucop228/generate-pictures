@@ -10,7 +10,7 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
     env:
-      DATABASE_URL: sqlite+aiosqlite:///./test.db
+      DATABASE_URL: sqlite+aiosqlite:///./.pytest_tmp/test.db
 
       DB_USER: test
       DB_PASSWORD: test
@@ -42,5 +42,22 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+      - name: Prepare SQLite file
+        run: mkdir -p .pytest_tmp && rm -f .pytest_tmp/test.db
+      - name: Init SQLite
+        run: |
+            python - <<'PY'
+            import asyncio
+            from app.core.database import engine, Base
+            from app.users import models as _users_models
+            from app.pictures import models as _pictures_models
+            
+            async def main():
+                if engine.url.get_backend_name() == "sqlite":
+                    async with engine.begin() as conn:
+                        await conn.run_sync(Base.metadata.create_all)
+            
+            asyncio.run(main())
+            PY
       - name: Run tests
         run: pytest

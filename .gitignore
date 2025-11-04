@@ -209,3 +209,7 @@ __marimo__/
 /generated_pictures
 
 .DS_Store
+
+test.db
+*.sqlite
+*.db
