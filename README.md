@@ -90,7 +90,7 @@ LOG_LEVEL=DEBUG
 
 ## Тесты
 
-### Локально (локально)
+### Локально
 ```bash
 make test-host         # тесты
 make test-host-cov     # покрытие тестами
