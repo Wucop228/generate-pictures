@@ -46,7 +46,7 @@ async def create_picture(request: Request, picture: PictureCreate):
 
     logger.debug("Сохраняю задачу в Redis: task_id=%s", task_id)
     try:
-        await redis_manager.set_task(task)
+        await redis_manager.save_task(task)
     except Exception:
         logger.exception("Сбой записи задачи в Redis: task_id=%s", task_id)
         raise HTTPException(
