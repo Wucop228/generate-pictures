@@ -5,6 +5,29 @@ on:
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_NAME: test
+      DB_HOST: localhost
+      DB_PORT: '5432'
+
+      SECRET_KEY: test-secret
+      ALGORITHM: HS256
+
+      REDIS_URL: redis://localhost:6379
+
+      S3_KEY_ID: dummy
+      S3_SECRET_KEY: dummy
+      S3_BUCKET_NAME: dummy
+
+      FORCE_DEVICE: cpu
+
+      LOG_LEVEL: DEBUG
     steps:
       - name: Checkout
         uses: actions/checkout@v4
